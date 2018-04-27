@@ -107,8 +107,11 @@ void run(const Config &config)
 	config.fan()->init();
 	while (cur_lvl != --config.levels().end() && (*cur_lvl)->up())
 		cur_lvl++;
+	std::vector<Level *>::const_iterator old_lvl = cur_lvl;
+
 	log(TF_NFY) << temp_state << " -> " <<
 			(*cur_lvl)->str() << flush;
+
 	config.fan()->set_speed(*cur_lvl);
 
 	while (likely(!interrupted)) {
@@ -126,14 +129,21 @@ void run(const Config &config)
 				cur_lvl++;
 			log(TF_INF) << temp_state << " -> " <<
 					(*cur_lvl)->str() << flush;
-			config.fan()->set_speed(*cur_lvl);
+
+            if (unlikely(cur_lvl != old_lvl)) {
+                config.fan()->set_speed(*cur_lvl);
+                old_lvl = cur_lvl;
+            }
 		}
 		else if (unlikely(cur_lvl != config.levels().begin() && (*cur_lvl)->down())) {
 			while (cur_lvl != config.levels().begin() && (*cur_lvl)->down())
 				cur_lvl--;
 			log(TF_INF) << temp_state << " -> " <<
 					(*cur_lvl)->str() << flush;
-			config.fan()->set_speed(*cur_lvl);
+            if (unlikely(cur_lvl != old_lvl)) {
+                config.fan()->set_speed(*cur_lvl);
+                old_lvl = cur_lvl;
+            }
 			tmp_sleeptime = sleeptime;
 		}
 		else {

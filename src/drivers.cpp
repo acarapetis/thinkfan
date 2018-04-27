@@ -78,7 +78,7 @@ bool FanDriver::operator == (const FanDriver &other) const
 ----------------------------------------------------------------------------*/
 
 TpFanDriver::TpFanDriver(const std::string &path)
-: FanDriver(path, 120)
+: FanDriver(path, 113)
 {
 	bool ctrl_supported = false;
 	std::fstream f(path_);
@@ -136,7 +136,6 @@ void TpFanDriver::set_speed(const Level *level)
 	last_watchdog_ping_ = std::chrono::system_clock::now();
 }
 
-
 void TpFanDriver::ping_watchdog_and_depulse(const Level *level)
 {
 	if (depulse_ > std::chrono::milliseconds(0)) {
@@ -144,8 +143,10 @@ void TpFanDriver::ping_watchdog_and_depulse(const Level *level)
 		std::this_thread::sleep_for(depulse_);
 		set_speed(level);
 	}
-	else if (last_watchdog_ping_ + watchdog_ + sleeptime <= std::chrono::system_clock::now())
+	else if (last_watchdog_ping_ + watchdog_ + sleeptime <= std::chrono::system_clock::now()) {
+        log(TF_NFY) << "Pinging watchdog." << flush;
 		set_speed(level);
+    }
 }
 
 
@@ -282,11 +283,17 @@ HwmonSensorDriver::HwmonSensorDriver(std::string path, std::vector<int> correcti
 void HwmonSensorDriver::read_temps() const
 {
 	std::ifstream f(path_);
-	if (!(f.is_open() && f.good()))
-		throw IOerror(MSG_T_GET(path_), errno);
+	if (!(f.is_open() && f.good())) {
+		//throw IOerror(MSG_T_GET(path_), errno);
+        temp_state.add_temp(correction_[0]);
+        return;
+    }
 	int tmp;
-	if (!(f >> tmp))
-		throw IOerror(MSG_T_GET(path_), errno);
+	if (!(f >> tmp)) {
+		//throw IOerror(MSG_T_GET(path_), errno);
+        temp_state.add_temp(correction_[0]);
+        return;
+    }
 	temp_state.add_temp(tmp/1000 + correction_[0]);
 }
 
