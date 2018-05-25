@@ -95,7 +95,7 @@ void sig_handler(int signum) {
 
 
 static inline void sensor_lost(const SensorDriver *s, const ExpectedError &e) {
-	if (!s->optional())
+	if (!s->optional()) {
 		error<SensorLost>(e);
 	else
 		log(TF_INF) << SensorLost(e).what();
@@ -108,8 +108,11 @@ void run(const Config &config)
 	tmp_sleeptime = sleeptime;
 
 	temp_state.restart();
-	for (const SensorDriver *sensor : config.sensors())
-		sensor->read_temps();
+	for (const SensorDriver *sensor : config.sensors()) {
+        try {
+            sensor->read_temps();
+        } catch (IOerror &e) {}
+    }
 	temp_state.init();
 
 	// Set initial fan level
