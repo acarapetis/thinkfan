@@ -95,7 +95,7 @@ void sig_handler(int signum) {
 
 
 static inline void sensor_lost(const SensorDriver *s, const ExpectedError &e) {
-	if (!s->optional()) {
+	if (!s->optional())
 		error<SensorLost>(e);
 	else
 		log(TF_INF) << SensorLost(e).what();
